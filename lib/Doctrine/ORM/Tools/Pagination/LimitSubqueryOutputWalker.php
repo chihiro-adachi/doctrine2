@@ -368,12 +368,10 @@ class LimitSubqueryOutputWalker extends SqlWalker
         if (! $orderByClause instanceof OrderByClause) {
             return $sql;
         }
-
+        
         // Rebuild the order by clause to work in the scope of the new select statement
         /* @var array $orderBy an array of rebuilt order by items */
         $orderBy = $this->rebuildOrderByClauseForOuterScope($orderByClause);
-
-        $innerSqlIdentifier = $sqlIdentifier;
 
         foreach ($orderBy as $field) {
             $field = preg_replace('/((\S+)\s+(ASC|DESC)\s*,?)*/', '${2}', $field);
@@ -383,21 +381,16 @@ class LimitSubqueryOutputWalker extends SqlWalker
             if (in_array($field, $sqlIdentifier, true)) {
                 continue;
             }
-            $innerSqlIdentifier[] = $field;
+
+            $sqlIdentifier[] = $field;
         }
 
-        // Build the innner select statement
-        $sql = sprintf(
-            'SELECT DISTINCT %s FROM (%s) dctrn_result_inner ORDER BY %s',
-            implode(', ', $innerSqlIdentifier),
+        return sprintf(
+            'SELECT DISTINCT %s FROM (%s) dctrn_result ORDER BY %s',
+            implode(', ', $sqlIdentifier),
             $innerSql,
             implode(', ', $orderBy)
         );
-
-        // now only select distinct identifier
-        $sql = sprintf('SELECT DISTINCT %s FROM (%s) dctrn_result', implode(', ', $sqlIdentifier), $sql);
-
-        return $sql;
     }
 
     /**
